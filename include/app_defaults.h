@@ -11,7 +11,7 @@
 #define INCLUDE_APP_DEFAULTS_H_
 
 /* Version information (Note: had to be in this order to work properly at the moment, need to fix the perl script) */
-#define VER_BUILD		42
+#define VER_BUILD		82
 #define VER_MINOR		1
 #define VER_MAJOR		0
 
@@ -42,6 +42,18 @@
 #define DEFAULT_MQTT_LOGIN "user"
 #define DEFAULT_MQTT_PASS "password"
 
+/* Display Settings */
+#define DEFAULT_DISPLAY_TOPIC_PREFIX "octodisplay/"
+#define DEFAULT_DISPLAY_TOPIC_ENABLE "enable"
+#define DEFAULT_DISPLAY_TOPIC_LINE1 "line1"
+#define DEFAULT_DISPLAY_TOPIC_LINE2 "line2"
+#define DEFAULT_DISPLAY_TOPIC_LINE3 "line3"
+#define DEFAULT_DISPLAY_TOPIC_LINE4 "line4"
+#define DEFAULT_DISPLAY_TOPIC_CLEAR "clear"
+#define DEFAULT_DISPLAY_TOPIC_BACKLIGHT "backlight"
+#define DEFAULT_DISPLAY_TOPIC_SCROLL "scroll"
+#define DEFAULT_DISPLAY_TOPIC_BLINK "blink"
+
 /* FTP Settings */
 #define DEFAULT_FTP_USER "octo"
 #define DEFAULT_FTP_PASS "1234"
@@ -50,5 +62,11 @@
 /* UDP Settings */
 #define DEFAULT_UDP true
 #define DEFAULT_UDP_PORT 1234
+
+/* Display Types */
+typedef enum  {
+	HD44780,	// HD44780 compatible LCD display
+	ST7735		// ST7735 LCD display
+} displaytype_t;
 
 #endif /* INCLUDE_APP_DEFAULTS_H_ */

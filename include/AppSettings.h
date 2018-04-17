@@ -48,8 +48,22 @@ struct ApplicationSettingsStorage
 	String mqtt_topic_pub = DEFAULT_MQTT_PUB;
 
 	/* Display Config */
-	bool display_enabled = true;
-	uint8_t display_type = 0; // display type in enum
+	bool display = true; // display function enabled
+	bool display_enabled = true; // displaying enabled
+	displaytype_t display_type = HD44780; // display type // display type in enum
+	bool display_backlight_on = true; // display backlight on after init
+
+	// HD44780 Display
+	String display_topic_prefix = DEFAULT_DISPLAY_TOPIC_PREFIX;
+	String display_topic_enable = DEFAULT_DISPLAY_TOPIC_ENABLE;
+	String display_topic_line1 = DEFAULT_DISPLAY_TOPIC_LINE1;
+	String display_topic_line2 = DEFAULT_DISPLAY_TOPIC_LINE2;
+	String display_topic_line3 = DEFAULT_DISPLAY_TOPIC_LINE3;
+	String display_topic_line4 = DEFAULT_DISPLAY_TOPIC_LINE4;
+	String display_topic_clear = DEFAULT_DISPLAY_TOPIC_CLEAR;
+	String display_topic_backlight = DEFAULT_DISPLAY_TOPIC_BACKLIGHT;
+	String display_topic_scroll = DEFAULT_DISPLAY_TOPIC_SCROLL;
+	String display_topic_blink = DEFAULT_DISPLAY_TOPIC_BLINK;
 
 	/* Key Input Config */
 	bool keyinput = DEFAULT_KEYINPUT;

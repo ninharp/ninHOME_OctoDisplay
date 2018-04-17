@@ -10,6 +10,11 @@
  */
 #include <application.h>
 
+#define TFT_CS     15
+#define TFT_RST    5  // you can also connect this to the Arduino reset
+                      // in which case, set this #define pin to -1!
+#define TFT_DC     4
+
 extern BssList wNetworks;
 extern String lastModified;
 
@@ -19,7 +24,15 @@ void onReceiveUDP(UdpConnection& connection, char *data, int size, IPAddress rem
 void statusLed(bool state);
 
 // Set the LCD address to 0x27
+//LiquidCrystal_I2C lcd(0x27);
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+
+// Option 1 (recommended): must use the hardware SPI pins
+// (for UNO thats sclk = 13 and sid = 11) and pin 10 must be
+// an output. This is much faster - also required if you want
+// to use the microSD card (see the image drawing example)
+Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
+// Use this initializer (uncomment) if you're using a 1.44" TFT
 
 /* MQTT client instance */
 /* For quickly check you can use: http://www.hivemq.com/demos/websocket-client/ (Connection= test.mosquitto.org:8080) */
@@ -31,9 +44,16 @@ UdpConnection udp = UdpConnection(onReceiveUDP);
 /* Timer to check for connection */
 Timer checkConnectionTimer;
 
+/* Timer for Display */
+bool scrollText = true;
+bool displayEnable = true;
+Timer displayTimer;
+
 Timer debounceTimer;
 bool key_pressed = false;
 long lastKeyPress = 0;
+
+void displayCallback();
 
 /* IRQ Callback for interrupt of key input */
 void IRAM_ATTR keyIRQHandler()
@@ -75,6 +95,61 @@ void onReceiveUDP(UdpConnection& connection, char *data, int size, IPAddress rem
 void onMQTTMessageReceived(String topic, String message)
 {
 	//debugf("Debug: %s - %s", topic.c_str(), message.c_str());
+	if (AppSettings.display_enabled && topic.startsWith(AppSettings.display_topic_prefix)) {
+		if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_enable)) {
+			//AppSettings.display_enabled = message.toInt();
+			if (message.toInt() == 0)
+				lcd.off();
+			else if (message.toInt() == 1)
+				lcd.on();
+		}
+		else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_line1)) {
+			lcd.setCursor(0, 0);
+			lcd.print(message);
+			/*if (scrollText) {
+				led.setNextText(message);
+			} else {
+				led.setText(message);
+				led.setNextText(message);
+				for (int i = 0; i < (message.length() * led.getCharWidth()); i++)
+					led.scrollTextLeft();
+			}*/
+		}
+		else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_line2)) {
+			lcd.setCursor(0, 1);
+			lcd.print(message);
+		}
+		else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_line3)) {
+			lcd.setCursor(0, 2);
+			lcd.print(message);
+		}
+		else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_line4)) {
+			lcd.setCursor(0, 3);
+			lcd.print(message);
+		}
+		else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_clear)) {
+			lcd.clear();
+			lcd.home();
+		}
+		else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_backlight)) {
+			if (message.toInt() == 0)
+				lcd.setBacklight(LOW);
+			else if (message.toInt() == 1)
+				lcd.setBacklight(HIGH);
+		}
+		else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_scroll)) {
+			if (message.toInt() == 0)
+				lcd.noAutoscroll();
+			else if (message.toInt() == 1)
+				lcd.autoscroll();
+		}
+		else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_blink)) {
+			if (message.toInt() == 0)
+				lcd.noBlink();
+			else if (message.toInt() == 1)
+				lcd.blink();
+		}
+	}
 }
 
 /* Start MQTT client and publish/subscribe to the used services */
@@ -96,6 +171,11 @@ void startMqttClient()
 
 		/* Subscribe to client command topic for general commands */
 		mqtt.subscribe(AppSettings.mqtt_topic_cmd);
+
+		/* Subscribe to display topic for display commands */
+		if (AppSettings.display) {
+			mqtt.subscribe(AppSettings.display_topic_prefix + "#");
+		}
 
 		/* Publish LWT message */
 		mqtt.publishWithQoS(AppSettings.mqtt_topic_lwt, WifiStation.getIP().toString(), 1, true);
@@ -237,6 +317,10 @@ void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway)
 		debounceTimer.initializeMs(100, debounceKey).start();
 	}*/
 
+	if (AppSettings.display) {
+		displayTimer.initializeMs(200, displayCallback).start();
+	}
+
 	/* Start timer which checks the connection to MQTT */
 	checkConnectionTimer.initializeMs(DEFAULT_CONNECT_CHECK_INTERVAL, checkMQTTConnection).start();
 
@@ -286,7 +370,29 @@ bool getStatusLed()
 	}
 }
 
-void serialCb(Stream& stream, char arrivedChar, unsigned short availableCharsCount) {
+void displayCallback()
+{
+	displayTimer.stop();
+	/*
+	led.clear();
+
+	if (scrollText)
+		led.scrollTextLeft();
+
+	led.drawText();
+	//led.commit();
+
+	if (displayEnable) {
+		led.commit(); // commit transfers the byte buffer to the displays
+	} else {
+		led.clear();
+		led.commit();
+	}
+	*/
+	displayTimer.restart();
+}
+
+void serialCallback(Stream& stream, char arrivedChar, unsigned short availableCharsCount) {
 
 	if (arrivedChar == '\n') {
 		char str[availableCharsCount];
@@ -352,7 +458,7 @@ void init()
 	/* Enable debug output to serial */
 	Serial.systemDebugOutput(true);
 
-	Serial.setCallback(serialCb);
+	Serial.setCallback(serialCallback);
 
 /*
 #ifndef DISABLE_SPIFFS
@@ -433,17 +539,21 @@ void init()
 			startAP();
 		}
 
-		if (AppSettings.display_enabled) {
-			// initialize the LCD
-			lcd.begin(16,2);
-			// Turn on the blacklight and print a message.
-			//lcd.setBacklight(LOW);
-			lcd.home ();                   // go home
-			lcd.print("Fuck off ");
-			//lcd.setCursor ( 0, 1 );        // go to the next line
-			//lcd.print (" FORUM - fm   ");
+		if (AppSettings.display) {
 			switch (AppSettings.display_type) {
-				case 0:	// HD44780 16x2 Display on I2C
+				case HD44780:	// HD44780 16x2 Display on I2C
+						// initialize the LCD
+						lcd.begin(16,2);
+						// Turn on the blacklight and print a message.
+						lcd.setBacklight(AppSettings.display_backlight_on);
+		                // go home
+						lcd.home ();
+						break;
+				case ST7735: // ST7735 Display 1,44" or 1,8"
+						//tft.initR(INITR_BLACKTAB); // 1,8"
+						tft.initR(INITR_144GREENTAB);// 1,4"
+
+						tft.fillScreen(ST7735_BLACK);
 						break;
 			}
 		}

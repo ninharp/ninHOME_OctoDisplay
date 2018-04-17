@@ -15,6 +15,8 @@
 #include <SmingCore/SmingCore.h>
 #include <AppSettings.h>
 #include <Libraries/LiquidCrystal/LiquidCrystal_I2C.h>
+#include <Libraries/Adafruit_ST7735/Adafruit_ST7735.h>
+#include <Libraries/Adafruit_GFX/Adafruit_GFX.h>
 #include <ninMQTTClient.h>
 
 #include <app_defaults.h>
