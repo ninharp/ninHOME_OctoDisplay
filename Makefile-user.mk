@@ -54,16 +54,12 @@ SPIFF_SIZE      ?= 200000
 #ESPTOOL2        ?= esptool2
 #$(ESPTOOL) -p $(COM_PORT) -b $(COM_SPEED_ESPTOOL) write_flash $(flashimageoptions) $(basename $(IMAGE_MAIN)) $(FW_BASE)/$(IMAGE_MAIN)
 
+## Flash routine to flash without touching the spiffs
 flash2:
 	$(vecho) "Killing Terminal to free $(COM_PORT)"
 	-$(Q) $(KILL_TERM)
 	$(vecho) "Writing $(basename $(IMAGE_MAIN)) $(FW_BASE)/$(IMAGE_MAIN) $(IMAGE_SDK_OFFSET) $(FW_BASE)/$(IMAGE_SDK)"
 	
-	$(ESPTOOL) -p $(COM_PORT) -b $(COM_SPEED_ESPTOOL) write_flash $(flashimageoptions) 0x00000 out/firmware/0x00000.bin 0x9000 out/firmware/0x9000.bin
+	$(ESPTOOL) -p $(COM_PORT) -b $(COM_SPEED_ESPTOOL) write_flash $(flashimageoptions) $(basename $(IMAGE_MAIN)) $(FW_BASE)/$(IMAGE_MAIN) $(IMAGE_SDK_OFFSET) $(FW_BASE)/$(IMAGE_SDK)
 
 #$(IMAGE_SDK_OFFSET) $(FW_BASE)/$(IMAGE_SDK)
-
-flash3:
-	$(vecho) "Killing Terminal to free $(COM_PORT)"
-	-$(Q) $(KILL_TERM)
-	$(ESPTOOL) -p $(COM_PORT) -b $(COM_SPEED_ESPTOOL) write_flash $(flashimageoptions) $(basename $(IMAGE_MAIN)) 0x02000 $(RBOOT_ROM_0) 
