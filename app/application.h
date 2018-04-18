@@ -18,9 +18,11 @@
 #include <Libraries/Adafruit_ST7735/Adafruit_ST7735.h>
 #include <Libraries/Adafruit_GFX/Adafruit_GFX.h>
 #include <ninMQTTClient.h>
+#include <system/include/debug_progmem.h>
 
 #include <app_defaults.h>
 #include <webinterface.h>
+#include <octoprint.h>
 
 void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway);
 void connectFail(String ssid, uint8_t ssidLength, uint8_t *bssid, uint8_t reason);

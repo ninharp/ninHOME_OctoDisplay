@@ -31,6 +31,11 @@
 									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}/system/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ninHOME_Node/lib}&quot;"/>
 								</option>
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.99907385" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="DEBUG_BUILD=1"/>
+									<listOptionValue builtIn="false" value="ICACHE_FLASH"/>
+									<listOptionValue builtIn="false" value="DEBUG_PRINT_FILENAME_AND_LINE=1"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.313321806" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.1999763015" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler">
@@ -40,6 +45,11 @@
 									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}/Libraries&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${SMING_HOME}/system/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ninHOME_Node/lib}&quot;"/>
+								</option>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1822005001" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="DEBUG_BUILD=1"/>
+									<listOptionValue builtIn="false" value="ICACHE_FLASH"/>
+									<listOptionValue builtIn="false" value="DEBUG_PRINT_FILENAME_AND_LINE=1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1330530366" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>

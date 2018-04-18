@@ -65,6 +65,12 @@ struct ApplicationSettingsStorage
 	String display_topic_scroll = DEFAULT_DISPLAY_TOPIC_SCROLL;
 	String display_topic_blink = DEFAULT_DISPLAY_TOPIC_BLINK;
 
+	String octoprint_topic_prefix = DEFAULT_OCTOPRINT_TOPIC_PREFIX;
+	String octoprint_topic_lwt = DEFAULT_OCTOPRINT_LWT_TOPIC;
+	String octoprint_temperature_topic_prefix = DEFAULT_OCTOPRINT_TEMPERATURE_TOPIC_PREFIX;
+	String octoprint_progress_topic_prefix = DEFAULT_OCTOPRINT_PROGRESS_TOPIC_PREFIX;
+	String octoprint_event_topic_prefix = DEFAULT_OCTOPRINT_EVENT_TOPIC_PREFIX;
+
 	/* Key Input Config */
 	bool keyinput = DEFAULT_KEYINPUT;
 	bool keyinput_invert = DEFAULT_KEYINPUT_INVERT;
