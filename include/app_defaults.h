@@ -11,7 +11,7 @@
 #define INCLUDE_APP_DEFAULTS_H_
 
 /* Version information (Note: had to be in this order to work properly at the moment, need to fix the perl script) */
-#define VER_BUILD		162
+#define VER_BUILD		183
 #define VER_MINOR		1
 #define VER_MAJOR		0
 

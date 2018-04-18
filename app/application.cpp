@@ -63,12 +63,16 @@ Timer checkConnectionTimer;
 bool scrollText = true;
 bool displayEnable = true;
 Timer displayTimer;
+Timer screenTimer;
 
 Timer debounceTimer;
 bool key_pressed = false;
 long lastKeyPress = 0;
 
+uint8_t displayPage = 0;
+
 void displayCallback();
+void displayScreenCallback();
 
 /* IRQ Callback for interrupt of key input */
 void IRAM_ATTR keyIRQHandler()
@@ -265,7 +269,7 @@ void onMQTTMessageReceived(String topic, String message)
 	}
 }
 
-void displayPage(uint8_t page)
+void displayPageScreen(uint8_t page)
 {
 	//lcd.home();
 	//lcd.print(temp_actual);
@@ -441,6 +445,7 @@ void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway)
 
 	if (AppSettings.display) {
 		displayTimer.initializeMs(200, displayCallback).start();
+		screenTimer.initializeMs(4000, displayScreenCallback).start();
 	}
 
 	/* Start timer which checks the connection to MQTT */
@@ -492,9 +497,50 @@ bool getStatusLed()
 	}
 }
 
+void displayScreenCallback()
+{
+	displayPage++;
+	if (displayPage > 1)
+		displayPage = 0;
+	else if (displayPage < 0)
+		displayPage = 1;
+}
+
 void displayCallback()
 {
 	displayTimer.stop();
+	if (displayPage == 0) {
+		//lcd.clear();
+		lcd.home();
+		lcd.print("T0: ");
+		lcd.print((int)round(octoprintValues.temperature[0].actual));
+		lcd.print("/");
+		lcd.print((int)round(octoprintValues.temperature[0].target));
+		lcd.print("     ");
+
+		lcd.setCursor(0,1);
+		lcd.print("Bed: ");
+		lcd.print((int)round(octoprintValues.temperature[octoprintValues.num_extruders].actual));
+		lcd.print("/");
+		lcd.print((int)round(octoprintValues.temperature[octoprintValues.num_extruders].target));
+		lcd.print("      ");
+	} else if (displayPage == 1) {
+		lcd.home();
+		lcd.print("Progress: ");
+		lcd.print(octoprintValues.progress.progress);
+		lcd.print("%    ");
+		//long x, long in_min, long in_max, long out_min, long out_max
+		uint8_t c = map(octoprintValues.progress.progress, 0, 100, 0, 14);
+		lcd.setCursor(0, 1);
+		lcd.print("[");
+		for (uint8_t i = 0; i < c; i++) {
+			lcd.print("#");
+		}
+		for (uint8_t i = c; i < 14; i++) {
+			lcd.print(" ");
+		}
+		lcd.print("]");
+	}
 	/*
 	led.clear();
 

@@ -1,8 +1,8 @@
 # Introduction
 
 ninHOME OctoDisplay is a small firmware to attach a display (LCD, gLCD, OLED, ...)
-to a ESP8266 Chip and act as a wireless Display for your OctoPrint controlled 3d Printers.
-It is roughly based on ninHOME Node Firmware which you can find on my Repositories.
+to a ESP8266 Chip and act as a wireless Monitor for your OctoPrint controlled 3d Printers.
+It is roughly based on ninHOME Node Firmware which you can find also on my Repositories.
 
 Currently it is still in work in progress state so i will add a few more displays at later time
 and more configuration options, currently it is bleeding edge but already useable.
@@ -18,10 +18,16 @@ connected display.
 
 Any contribution is very warm welcome...
 
+# Currently supported Displays
+
+* Any HD44780 compatible Display over I2C Adapter
+* ST7735 Color LCD Display over Hardware SPI
+* SSD1306 (work in progress)
+
 # Screenshots
 
-![wifi networks](https://raw.github.com/ninharp/ninESP/master/doc/screenshots/web_networks_small.jpg "Wifi Network Settings")
-![mqtt settings](https://raw.github.com/ninharp/ninESP/master/doc/screenshots/web_mqtt.jpg "MQTT Settings")
+![hd44780_screen_1](https://raw.github.com/ninharp/ninHOME_OctoDisplay/master/doc/screenshots/screen_hd44780_1.jpg "HD44780 Screen 1")
+![hd44780_screen_2](https://raw.github.com/ninharp/ninHOME_OctoDisplay/master/doc/screenshots/screen_hd44780_2.jpg "HD44780 Screen 2")
 
 # Dependencies
 
