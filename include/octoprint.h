@@ -64,7 +64,7 @@ struct octoprint_t {
 	octoprint_progress_t progress; // Printing progress
 	octoprint_events_t events; // Events from octoprint
 	bool connected; // Octoprint Connected? (LWT)
-} octoprintValues;
+};
 
 //struct octoprint_display_t {
 //} octoprintDisplay;

@@ -8,9 +8,10 @@
  * Webinterface header file
  *
  */
-
 #ifndef APP_WEBINTERFACE_H_
 #define APP_WEBINTERFACE_H_
+
+#include "application.h"
 
 String getStatusString();
 void startWebinterface();

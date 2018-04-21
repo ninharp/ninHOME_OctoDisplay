@@ -38,10 +38,6 @@ const unsigned char nozzle_bmp[] PROGMEM = {
 			    0x0C,0x00  // 0000110000000000
 			  };
 
-// Set the LCD address to 0x27
-//LiquidCrystal_I2C lcd(0x27);
-LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
-
 // Option 1 (recommended): must use the hardware SPI pins
 // (for UNO thats sclk = 13 and sid = 11) and pin 10 must be
 // an output. This is much faster - also required if you want
@@ -69,7 +65,11 @@ Timer debounceTimer;
 bool key_pressed = false;
 long lastKeyPress = 0;
 
-uint8_t displayPage = 0;
+uint8_t displayPage = 2;
+
+octoprint_t octoprintValues;
+
+display_hd44780 disp_hd44780(&octoprintValues);
 
 void displayCallback();
 void displayScreenCallback();
@@ -77,7 +77,7 @@ void displayScreenCallback();
 /* IRQ Callback for interrupt of key input */
 void IRAM_ATTR keyIRQHandler()
 {
-	/*if (AppSettings.relay && AppSettings.keyinput) {
+	if (AppSettings.keyinput_pin > -1) {
 		noInterrupts();
 		if (AppSettings.keyinput_invert) {
 			if (digitalRead(AppSettings.keyinput_pin) == LOW)
@@ -91,7 +91,16 @@ void IRAM_ATTR keyIRQHandler()
 				key_pressed = false;
 		}
 		//interrupts();
-	}*/
+	}
+}
+
+void printDisplay(uint8_t line, String str)
+{
+	if (AppSettings.display_type == HD44780) {
+			LiquidCrystal_I2C lcd = disp_hd44780.getLCD();
+			lcd.setCursor(0, line); lcd.print(DEFAULT_CLEARLINE_STRING);
+			lcd.setCursor(0, line); lcd.print(str);
+	}
 }
 
 void serialShowInfo() {
@@ -115,164 +124,162 @@ void onMQTTMessageReceived(String topic, String message)
 {
 	//debugf("Debug: %s - %s", topic.c_str(), message.c_str());
 
-	/* General Display */
-	if (AppSettings.display && topic.startsWith(AppSettings.display_topic_prefix)) {
-		if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_enable)) {
-			//AppSettings.display_enabled = message.toInt();
-			if (message.toInt() == 0)
-				lcd.off();
-			else if (message.toInt() == 1)
-				lcd.on();
-		}
-		else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_line1)) {
-			lcd.setCursor(0, 0);
-			lcd.print(message);
-			/*if (scrollText) {
-				led.setNextText(message);
-			} else {
-				led.setText(message);
-				led.setNextText(message);
-				for (int i = 0; i < (message.length() * led.getCharWidth()); i++)
-					led.scrollTextLeft();
-			}*/
-		}
-		else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_line2)) {
-			lcd.setCursor(0, 1);
-			lcd.print(message);
-		}
-		else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_line3)) {
-			lcd.setCursor(0, 2);
-			lcd.print(message);
-		}
-		else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_line4)) {
-			lcd.setCursor(0, 3);
-			lcd.print(message);
-		}
-		else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_clear)) {
-			lcd.clear();
-			lcd.home();
-		}
-		else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_backlight)) {
-			if (message.toInt() == 0)
-				lcd.setBacklight(LOW);
-			else if (message.toInt() == 1)
-				lcd.setBacklight(HIGH);
-		}
-		else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_scroll)) {
-			if (message.toInt() == 0)
-				lcd.noAutoscroll();
-			else if (message.toInt() == 1)
-				lcd.autoscroll();
-		}
-		else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_blink)) {
-			if (message.toInt() == 0)
-				lcd.noBlink();
-			else if (message.toInt() == 1)
-				lcd.blink();
-		}
+	if (AppSettings.display_type == HD44780) {
+		LiquidCrystal_I2C lcd = disp_hd44780.getLCD();
 
-	/* Octoprint MQTT based values */
-	} else if (AppSettings.display && topic.startsWith(AppSettings.octoprint_topic_prefix)) {
-		DynamicJsonBuffer payloadBuffer;
-		debugf("Topic: %s || Payload: %s", topic.c_str(), message.c_str());
-		if (topic.equals(AppSettings.octoprint_topic_prefix + AppSettings.octoprint_topic_lwt)) {
-			if (message.equals(OCTOPRINT_LWT_CONNECTED_STRING))
-				octoprintValues.connected = true;
-			else if (message.equals(OCTOPRINT_LWT_DISCONNECTED_STRING))
-				octoprintValues.connected = false;
+		/* General Display */
+		if (AppSettings.display && topic.startsWith(AppSettings.display_topic_prefix)) {
+			if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_enable)) {
+				//AppSettings.display_enabled = message.toInt();
+				if (message.toInt() == 0)
+					lcd.off();
+				else if (message.toInt() == 1)
+					lcd.on();
+			}
+			else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_line1)) {
+				lcd.setCursor(0, 0);
+				lcd.print(message);
+				/*if (scrollText) {
+					led.setNextText(message);
+				} else {
+					led.setText(message);
+					led.setNextText(message);
+					for (int i = 0; i < (message.length() * led.getCharWidth()); i++)
+						led.scrollTextLeft();
+				}*/
+			}
+			else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_line2)) {
+				lcd.setCursor(0, 1);
+				lcd.print(message);
+			}
+			else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_line3)) {
+				lcd.setCursor(0, 2);
+				lcd.print(message);
+			}
+			else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_line4)) {
+				lcd.setCursor(0, 3);
+				lcd.print(message);
+			}
+			else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_clear)) {
+				lcd.clear();
+				lcd.home();
+			}
+			else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_backlight)) {
+				if (message.toInt() == 0)
+					lcd.setBacklight(LOW);
+				else if (message.toInt() == 1)
+					lcd.setBacklight(HIGH);
+			}
+			else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_scroll)) {
+				if (message.toInt() == 0)
+					lcd.noAutoscroll();
+				else if (message.toInt() == 1)
+					lcd.autoscroll();
+			}
+			else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_blink)) {
+				if (message.toInt() == 0)
+					lcd.noBlink();
+				else if (message.toInt() == 1)
+					lcd.blink();
+			}
 
-			debugf("[OctoPrint] %s", octoprintValues.connected ? "connected" : "disconnected");
-		}
-		/* Temperature Topic */
-		else if (topic.startsWith(AppSettings.octoprint_topic_prefix + AppSettings.octoprint_temperature_topic_prefix)) {
-			JsonObject& payload = payloadBuffer.parseObject(message);
-			octoprintValues._timestamp = payload["_timestamp"];
-			float temp_actual = payload["actual"];
-			float temp_target = payload["target"];
-			if (topic.endsWith(OCTOPRINT_TEMP_TOOL0_STRING)) {	// Tool0 Temperature
-				octoprintValues.temperature[0].actual = temp_actual;
-				octoprintValues.temperature[0].target = temp_target;
+		/* Octoprint MQTT based values */
+		} else if (AppSettings.display && topic.startsWith(AppSettings.octoprint_topic_prefix)) {
+			DynamicJsonBuffer payloadBuffer;
+			debugf("Topic: %s || Payload: %s", topic.c_str(), message.c_str());
+			if (topic.equals(AppSettings.octoprint_topic_prefix + AppSettings.octoprint_topic_lwt)) {
+				if (message.equals(OCTOPRINT_LWT_CONNECTED_STRING))
+					octoprintValues.connected = true;
+				else if (message.equals(OCTOPRINT_LWT_DISCONNECTED_STRING))
+					octoprintValues.connected = false;
+
+				debugf("[OctoPrint] %s", octoprintValues.connected ? "connected" : "disconnected");
+			}
+			/* Temperature Topic */
+			else if (topic.startsWith(AppSettings.octoprint_topic_prefix + AppSettings.octoprint_temperature_topic_prefix)) {
+				JsonObject& payload = payloadBuffer.parseObject(message);
+				octoprintValues._timestamp = payload["_timestamp"];
+				float temp_actual = payload["actual"];
+				float temp_target = payload["target"];
+				if (topic.endsWith(OCTOPRINT_TEMP_TOOL0_STRING)) {	// Tool0 Temperature
+					octoprintValues.temperature[0].actual = temp_actual;
+					octoprintValues.temperature[0].target = temp_target;
+					if (temp_actual > 0)
+						debugf("[Temperature] Tool 0");
+				}
+				else if (topic.endsWith(OCTOPRINT_TEMP_TOOL1_STRING) && octoprintValues.num_extruders >= 1) {	// Tool1 Temperature
+					octoprintValues.temperature[1].actual = temp_actual;
+					octoprintValues.temperature[1].target = temp_target;
+					if (temp_actual > 0)
+						debugf("[Temperature] Tool 1");
+				}
+				else if (topic.endsWith(OCTOPRINT_TEMP_TOOL2_STRING) && octoprintValues.num_extruders >= 2) {	// Tool0 Temperature
+					octoprintValues.temperature[2].actual = temp_actual;
+					octoprintValues.temperature[2].target = temp_target;
+					if (temp_actual > 0)
+						debugf("[Temperature] Tool 2");
+				}
+				else if (topic.endsWith(OCTOPRINT_TEMP_BED_STRING)) {	// Bed Temperature
+					octoprintValues.temperature[octoprintValues.num_extruders].actual = temp_actual;
+					octoprintValues.temperature[octoprintValues.num_extruders].target = temp_target;
+					if (temp_actual > 0)
+						debugf("[Temperature] Bed");
+				}
 				if (temp_actual > 0)
-					debugf("[Temperature] Tool 0");
+					debugf("[Temperature] Actual: %.2f - Target: %.2f", temp_actual, temp_target);
 			}
-			else if (topic.endsWith(OCTOPRINT_TEMP_TOOL1_STRING) && octoprintValues.num_extruders >= 1) {	// Tool1 Temperature
-				octoprintValues.temperature[1].actual = temp_actual;
-				octoprintValues.temperature[1].target = temp_target;
-				if (temp_actual > 0)
-					debugf("[Temperature] Tool 1");
-			}
-			else if (topic.endsWith(OCTOPRINT_TEMP_TOOL2_STRING) && octoprintValues.num_extruders >= 2) {	// Tool0 Temperature
-				octoprintValues.temperature[2].actual = temp_actual;
-				octoprintValues.temperature[2].target = temp_target;
-				if (temp_actual > 0)
-					debugf("[Temperature] Tool 2");
-			}
-			else if (topic.endsWith(OCTOPRINT_TEMP_BED_STRING)) {	// Bed Temperature
-				octoprintValues.temperature[octoprintValues.num_extruders].actual = temp_actual;
-				octoprintValues.temperature[octoprintValues.num_extruders].target = temp_target;
-				if (temp_actual > 0)
-					debugf("[Temperature] Bed");
-			}
-			if (temp_actual > 0)
-				debugf("[Temperature] Actual: %.2f - Target: %.2f", temp_actual, temp_target);
-		}
-		/* Progress Topic */
-		else if (topic.startsWith(AppSettings.octoprint_topic_prefix + AppSettings.octoprint_progress_topic_prefix)) {
-			JsonObject& payload = payloadBuffer.parseObject(message);
-			octoprintValues._timestamp = payload["_timestamp"];
-			octoprintValues.progress.progress = payload["progress"];
-			if (topic.endsWith(OCTOPRINT_PROGRESS_PRINTING_STRING)) {
-				octoprintValues.progress.printing.location = payload["location"].asString();
-				octoprintValues.progress.printing.path = payload["path"].asString();
-				debugf("[Progress Printing] Progress: %d", octoprintValues.progress.progress);
-				debugf("[Progress Printing] Location: %s - Path: %s", octoprintValues.progress.printing.location.c_str(), octoprintValues.progress.printing.path.c_str());
+			/* Progress Topic */
+			else if (topic.startsWith(AppSettings.octoprint_topic_prefix + AppSettings.octoprint_progress_topic_prefix)) {
+				JsonObject& payload = payloadBuffer.parseObject(message);
+				octoprintValues._timestamp = payload["_timestamp"];
+				octoprintValues.progress.progress = payload["progress"];
+				if (topic.endsWith(OCTOPRINT_PROGRESS_PRINTING_STRING)) {
+					octoprintValues.progress.printing.location = payload["location"].asString();
+					octoprintValues.progress.printing.path = payload["path"].asString();
+					debugf("[Progress Printing] Progress: %d", octoprintValues.progress.progress);
+					debugf("[Progress Printing] Location: %s - Path: %s", octoprintValues.progress.printing.location.c_str(), octoprintValues.progress.printing.path.c_str());
 
-			} else if (topic.endsWith(OCTOPRINT_PROGRESS_SLICING_STRING)) {
-				octoprintValues.progress.slicing.source_location = payload["source_location"].asString();
-				octoprintValues.progress.slicing.source_path = payload["source_path"].asString();
-				octoprintValues.progress.slicing.dest_location = payload["destination_location"].asString();
-				octoprintValues.progress.slicing.dest_path = payload["destination_path"].asString();
-				octoprintValues.progress.slicing.slicer = payload["slicer"].asString();
-				debugf("[Progress Slicing] Progress: %d", octoprintValues.progress.progress);
-				debugf("[Progress Slicing] SRC Location: %s - SRC Path: %s", octoprintValues.progress.slicing.source_location.c_str(), octoprintValues.progress.slicing.source_path.c_str());
-				debugf("[Progress Slicing] DES Location: %s - DES Path: %s", octoprintValues.progress.slicing.dest_location.c_str(), octoprintValues.progress.slicing.dest_path.c_str());
-				debugf("[Progress Slicing] Slicer: %s", octoprintValues.progress.slicing.slicer.c_str());
+				} else if (topic.endsWith(OCTOPRINT_PROGRESS_SLICING_STRING)) {
+					octoprintValues.progress.slicing.source_location = payload["source_location"].asString();
+					octoprintValues.progress.slicing.source_path = payload["source_path"].asString();
+					octoprintValues.progress.slicing.dest_location = payload["destination_location"].asString();
+					octoprintValues.progress.slicing.dest_path = payload["destination_path"].asString();
+					octoprintValues.progress.slicing.slicer = payload["slicer"].asString();
+					debugf("[Progress Slicing] Progress: %d", octoprintValues.progress.progress);
+					debugf("[Progress Slicing] SRC Location: %s - SRC Path: %s", octoprintValues.progress.slicing.source_location.c_str(), octoprintValues.progress.slicing.source_path.c_str());
+					debugf("[Progress Slicing] DES Location: %s - DES Path: %s", octoprintValues.progress.slicing.dest_location.c_str(), octoprintValues.progress.slicing.dest_path.c_str());
+					debugf("[Progress Slicing] Slicer: %s", octoprintValues.progress.slicing.slicer.c_str());
+				}
 			}
-		}
-		/* Event Topic */
-		else if (topic.startsWith(AppSettings.octoprint_topic_prefix + AppSettings.octoprint_event_topic_prefix)) {
-			JsonObject& payload = payloadBuffer.parseObject(message);
-			octoprintValues._timestamp = payload["_timestamp"];
-			octoprintValues.events.lastEvent = payload["_event"].asString();
+			/* Event Topic */
+			else if (topic.startsWith(AppSettings.octoprint_topic_prefix + AppSettings.octoprint_event_topic_prefix)) {
+				JsonObject& payload = payloadBuffer.parseObject(message);
+				octoprintValues._timestamp = payload["_timestamp"];
+				octoprintValues.events.lastEvent = payload["_event"].asString();
 
-			/* PrintStarted Event */
-			if (topic.endsWith(OCTOPRINT_EVENT_PRINTSTARTED_STRING)) {
-				octoprintValues.events.PrintStarted.origin = payload["origin"].asString();
-#ifdef OCTOPRINT_VER13
-				octoprintValues.events.PrintStarted.name = payload["name"].asString();
-				octoprintValues.events.PrintStarted.path = payload["path"].asString();
-#else
-				octoprintValues.events.PrintStarted.name = payload["filename"].asString();
-				octoprintValues.events.PrintStarted.path = payload["file"].asString();
-#endif
-				debugf("[Event %s] Name: %s - Origin: %s - Path: %s", octoprintValues.events.lastEvent.c_str(), octoprintValues.events.PrintStarted.name.c_str(), octoprintValues.events.PrintStarted.origin.c_str(), octoprintValues.events.PrintStarted.path.c_str());
+				/* PrintStarted Event */
+				if (topic.endsWith(OCTOPRINT_EVENT_PRINTSTARTED_STRING)) {
+					octoprintValues.events.PrintStarted.origin = payload["origin"].asString();
+					#ifdef OCTOPRINT_VER13
+					octoprintValues.events.PrintStarted.name = payload["name"].asString();
+					octoprintValues.events.PrintStarted.path = payload["path"].asString();
+					#else
+					octoprintValues.events.PrintStarted.name = payload["filename"].asString();
+					octoprintValues.events.PrintStarted.path = payload["file"].asString();
+					#endif
+					debugf("[Event %s] Name: %s - Origin: %s - Path: %s", octoprintValues.events.lastEvent.c_str(), octoprintValues.events.PrintStarted.name.c_str(), octoprintValues.events.PrintStarted.origin.c_str(), octoprintValues.events.PrintStarted.path.c_str());
+				}
+				/* Connected Event */
+				else if (topic.endsWith(OCTOPRINT_EVENT_CONNECTED_STRING)) {
+					octoprintValues.events.Connected.baudrate = payload["baudrate"].asString();
+					octoprintValues.events.Connected.port = payload["port"].asString();
+					debugf("[Event %s] Baudrate: %s - Port: %s", octoprintValues.events.lastEvent.c_str(), octoprintValues.events.Connected.baudrate.c_str(), octoprintValues.events.Connected.port.c_str());
+				}
 			}
-			/* Connected Event */
-			else if (topic.endsWith(OCTOPRINT_EVENT_CONNECTED_STRING)) {
-				octoprintValues.events.Connected.baudrate = payload["baudrate"].asString();
-				octoprintValues.events.Connected.port = payload["port"].asString();
-				debugf("[Event %s] Baudrate: %s - Port: %s", octoprintValues.events.lastEvent.c_str(), octoprintValues.events.Connected.baudrate.c_str(), octoprintValues.events.Connected.port.c_str());
-			}
-		}
 
-		debugf("[Timestamp] %d", octoprintValues._timestamp);
+			debugf("[Timestamp] %d", octoprintValues._timestamp);
+		}
 	}
-}
-
-void displayPageScreen(uint8_t page)
-{
-	//lcd.home();
-	//lcd.print(temp_actual);
 }
 
 /* Start MQTT client and publish/subscribe to the used services */
@@ -380,7 +387,7 @@ void stopAP()
 
 void debounceKey()
 {
-	if (key_pressed && (millis() - lastKeyPress) >= 500) { // check if key is pressed and last key press is ddd milliseconds away (need config value)
+	if (key_pressed && (millis() - lastKeyPress) >= AppSettings.keyinput_debounce) { // check if key is pressed and last key press is ddd milliseconds away (need config value)
 		if (AppSettings.keyinput_invert) {
 			if (digitalRead(AppSettings.keyinput_pin) == LOW)
 				key_pressed = true;
@@ -396,6 +403,8 @@ void debounceKey()
 		if (key_pressed) {
 			lastKeyPress = millis(); // reset last key press millis
 			key_pressed = false; // reset key_pressed value
+			Serial.print("Button");
+
 			interrupts(); // re-enable the interrupts
 		}
 	}
@@ -439,9 +448,11 @@ void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway)
 	/* Start Services for Peripherals */
 	startServices();
 
-	/*if (AppSettings.relay && AppSettings.keyinput) {
+	if (AppSettings.keyinput) {
+		/* Attach interrupt if enabled in config */
+		attachInterrupt(AppSettings.keyinput_pin, keyIRQHandler, CHANGE);
 		debounceTimer.initializeMs(100, debounceKey).start();
-	}*/
+	}
 
 	if (AppSettings.display) {
 		displayTimer.initializeMs(200, displayCallback).start();
@@ -500,63 +511,18 @@ bool getStatusLed()
 void displayScreenCallback()
 {
 	displayPage++;
-	if (displayPage > 1)
+	if (displayPage > 2)
 		displayPage = 0;
 	else if (displayPage < 0)
-		displayPage = 1;
+		displayPage = 2;
 }
 
 void displayCallback()
 {
 	displayTimer.stop();
-	if (displayPage == 0) {
-		//lcd.clear();
-		lcd.home();
-		lcd.print("T0: ");
-		lcd.print((int)round(octoprintValues.temperature[0].actual));
-		lcd.print("/");
-		lcd.print((int)round(octoprintValues.temperature[0].target));
-		lcd.print("     ");
-
-		lcd.setCursor(0,1);
-		lcd.print("Bed: ");
-		lcd.print((int)round(octoprintValues.temperature[octoprintValues.num_extruders].actual));
-		lcd.print("/");
-		lcd.print((int)round(octoprintValues.temperature[octoprintValues.num_extruders].target));
-		lcd.print("      ");
-	} else if (displayPage == 1) {
-		lcd.home();
-		lcd.print("Progress: ");
-		lcd.print(octoprintValues.progress.progress);
-		lcd.print("%    ");
-		//long x, long in_min, long in_max, long out_min, long out_max
-		uint8_t c = map(octoprintValues.progress.progress, 0, 100, 0, 14);
-		lcd.setCursor(0, 1);
-		lcd.print("[");
-		for (uint8_t i = 0; i < c; i++) {
-			lcd.print("#");
-		}
-		for (uint8_t i = c; i < 14; i++) {
-			lcd.print(" ");
-		}
-		lcd.print("]");
-	}
-	/*
-	led.clear();
-
-	if (scrollText)
-		led.scrollTextLeft();
-
-	led.drawText();
-	//led.commit();
-
-	if (displayEnable) {
-		led.commit(); // commit transfers the byte buffer to the displays
-	} else {
-		led.clear();
-		led.commit();
-	}
-	*/
+	//display_hd44780 display();
+	disp_hd44780.showPage(displayPage);
+	//display.showPage(&lcd, displayPage);
 	displayTimer.restart();
 }
 
@@ -683,39 +649,10 @@ void init()
 			delay(200);
 		}
 
-		/* If there is any ssid set then assume there is a network set */
-		if (AppSettings.ssid.length() > 0) {
-			debugf("Settings found. Starting Station Mode");
-			/* Stopping Accesspoint mode if it is running */
-			stopAP();
-
-			//TODO: nosave option wont work correctly
-			/* Set the config values to the corrosponding wifistation settings and disable saving */
-			WifiStation.config(AppSettings.ssid, AppSettings.password, true, false);
-
-			/* If dhcp is disabled in settings then enable set fixed ip from settings */
-			if (!AppSettings.dhcp && !AppSettings.ip.isNull())
-				WifiStation.setIP(AppSettings.ip, AppSettings.netmask, AppSettings.gateway);
-
-			/* register callbacks for GotIP and Disconnect wifi events */
-			WifiEvents.onStationGotIP(connectOk);
-			/* set callback that should be triggered if we are disconnected or connection attempt failed */
-			WifiEvents.onStationDisconnect(connectFail);
-		} else {
-			/* No valid settings found, so start access point mode */
-			debugf("Settings found but SSID is empty! Starting Setup Mode");
-			startAP();
-		}
-
 		if (AppSettings.display) {
 			switch (AppSettings.display_type) {
-				case HD44780:	// HD44780 16x2 Display on I2C
-						// initialize the LCD
-						lcd.begin(16,2);
-						// Turn on the blacklight and print a message.
-						lcd.setBacklight(AppSettings.display_backlight_on);
-		                // go home
-						lcd.home ();
+				case HD44780: // HD44780 16x2 Display on I2C
+						disp_hd44780.begin(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 						break;
 				case ST7735: // ST7735 Display 1,44" or 1,8"
 						//tft.initR(INITR_BLACKTAB); // 1,8"
@@ -742,6 +679,32 @@ void init()
 				}
 				y++;
 			}*/
+
+			/* If there is any ssid set then assume there is a network set */
+			if (AppSettings.ssid.length() > 0) {
+				debugf("Settings found. Starting Station Mode");
+				/* Stopping Accesspoint mode if it is running */
+				stopAP();
+
+				printDisplay(0, "Connecting to:");
+				printDisplay(1, AppSettings.ssid);
+				//TODO: nosave option wont work correctly
+				/* Set the config values to the corrosponding wifistation settings and disable saving */
+				WifiStation.config(AppSettings.ssid, AppSettings.password, true, false);
+
+				/* If dhcp is disabled in settings then enable set fixed ip from settings */
+				if (!AppSettings.dhcp && !AppSettings.ip.isNull())
+					WifiStation.setIP(AppSettings.ip, AppSettings.netmask, AppSettings.gateway);
+
+				/* register callbacks for GotIP and Disconnect wifi events */
+				WifiEvents.onStationGotIP(connectOk);
+				/* set callback that should be triggered if we are disconnected or connection attempt failed */
+				WifiEvents.onStationDisconnect(connectFail);
+			} else {
+				/* No valid settings found, so start access point mode */
+				debugf("Settings found but SSID is empty! Starting Setup Mode");
+				startAP();
+			}
 		}
 	} else {
 		/* No settings file found, so start access point mode */

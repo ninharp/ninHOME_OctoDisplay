@@ -8,7 +8,6 @@
  * All Webinterface dependend functions
  *
  */
-#include "application.h"
 #include "webinterface.h"
 
 /* Web and FTP Server instance */

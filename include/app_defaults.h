@@ -11,7 +11,7 @@
 #define INCLUDE_APP_DEFAULTS_H_
 
 /* Version information (Note: had to be in this order to work properly at the moment, need to fix the perl script) */
-#define VER_BUILD		183
+#define VER_BUILD		419
 #define VER_MINOR		1
 #define VER_MAJOR		0
 
@@ -27,8 +27,8 @@
 #define DEFAULT_CONNECT_CHECK_INTERVAL 3000
 
 /* Key debouncing intervall (100ms) */
-#define DEFAULT_KEYINPUT false
-#define DEFAULT_KEYINPUT_PIN 5 //D1
+#define DEFAULT_KEYINPUT true
+#define DEFAULT_KEYINPUT_PIN 16 //D0
 #define DEFAULT_KEYINPUT_DEBOUNCE_MS 500
 #define DEFAULT_KEYINPUT_INVERT false
 
