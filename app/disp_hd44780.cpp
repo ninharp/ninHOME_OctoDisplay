@@ -133,10 +133,9 @@ void display_hd44780::begin(uint8_t lcd_Addr, uint8_t En, uint8_t Rw, uint8_t Rs
 
 	lcd->clear();
 	lcd->home();
-	//lcd->print(DEFAULT_STARTUP_STRING);
-	printBig(4, 9);
-	printBig(8, 3);
-	printBig(12, 10);
+	lcd->print(DEFAULT_STARTUP_STRING_LINE1);
+	lcd->setCursor(0,1);
+	lcd->print(DEFAULT_STARTUP_STRING_LINE2);
 }
 
 void display_hd44780::printBig(uint8_t x, uint8_t num) {
@@ -234,7 +233,7 @@ void display_hd44780::showPage(uint8_t displayPage) {
 		*/
 }
 
-LiquidCrystal_I2C display_hd44780::getLCD(void) {
+LiquidCrystal_I2C display_hd44780::getDisplay(void) {
 	return *lcd;
 }
 

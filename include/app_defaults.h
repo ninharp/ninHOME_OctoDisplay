@@ -11,7 +11,7 @@
 #define INCLUDE_APP_DEFAULTS_H_
 
 /* Version information (Note: had to be in this order to work properly at the moment, need to fix the perl script) */
-#define VER_BUILD		419
+#define VER_BUILD		524
 #define VER_MINOR		1
 #define VER_MAJOR		0
 
@@ -28,7 +28,7 @@
 
 /* Key debouncing intervall (100ms) */
 #define DEFAULT_KEYINPUT true
-#define DEFAULT_KEYINPUT_PIN 16 //D0
+#define DEFAULT_KEYINPUT_PIN 12
 #define DEFAULT_KEYINPUT_DEBOUNCE_MS 500
 #define DEFAULT_KEYINPUT_INVERT false
 
@@ -49,6 +49,7 @@
 #define DEFAULT_DISPLAY_TOPIC_LINE2 "line2"
 #define DEFAULT_DISPLAY_TOPIC_LINE3 "line3"
 #define DEFAULT_DISPLAY_TOPIC_LINE4 "line4"
+#define DEFAULT_DISPLAY_TOPIC_TEXT "text"
 #define DEFAULT_DISPLAY_TOPIC_CLEAR "clear"
 #define DEFAULT_DISPLAY_TOPIC_BACKLIGHT "backlight"
 #define DEFAULT_DISPLAY_TOPIC_SCROLL "scroll"
@@ -85,7 +86,7 @@
 
 /* Display Types */
 typedef enum  {
-	HD44780,	// HD44780 compatible LCD display
+	HD44780_I2C,	// HD44780 compatible LCD display
 	ST7735		// ST7735 LCD display
 } displaytype_t;
 

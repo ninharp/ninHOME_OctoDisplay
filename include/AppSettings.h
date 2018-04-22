@@ -33,7 +33,7 @@ struct ApplicationSettingsStorage
 	uint16_t udp_port = DEFAULT_UDP_PORT;
 
 	/* Status LED Config */
-	int8_t status_led_pin = -1;
+	int8_t status_led_pin = 16;
 	bool status_led_inv = false;
 
 	/* MQTT Config */
@@ -50,7 +50,7 @@ struct ApplicationSettingsStorage
 	/* Display Config */
 	bool display = true; // display function enabled
 	bool display_enabled = true; // displaying enabled
-	displaytype_t display_type = HD44780; // display type // display type in enum
+	displaytype_t display_type = ST7735; // display type
 	bool display_backlight_on = true; // display backlight on after init
 
 	// HD44780 Display
@@ -60,6 +60,7 @@ struct ApplicationSettingsStorage
 	String display_topic_line2 = DEFAULT_DISPLAY_TOPIC_LINE2;
 	String display_topic_line3 = DEFAULT_DISPLAY_TOPIC_LINE3;
 	String display_topic_line4 = DEFAULT_DISPLAY_TOPIC_LINE4;
+	String display_topic_text = DEFAULT_DISPLAY_TOPIC_TEXT;
 	String display_topic_clear = DEFAULT_DISPLAY_TOPIC_CLEAR;
 	String display_topic_backlight = DEFAULT_DISPLAY_TOPIC_BACKLIGHT;
 	String display_topic_scroll = DEFAULT_DISPLAY_TOPIC_SCROLL;

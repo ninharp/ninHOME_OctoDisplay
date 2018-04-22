@@ -10,11 +10,6 @@
  */
 #include <application.h>
 
-#define TFT_CS     15
-#define TFT_RST    5  // you can also connect this to the Arduino reset
-                      // in which case, set this #define pin to -1!
-#define TFT_DC     4
-
 extern BssList wNetworks;
 extern String lastModified;
 
@@ -37,13 +32,6 @@ const unsigned char nozzle_bmp[] PROGMEM = {
 			    0x1E,0x00, // 0001111000000000
 			    0x0C,0x00  // 0000110000000000
 			  };
-
-// Option 1 (recommended): must use the hardware SPI pins
-// (for UNO thats sclk = 13 and sid = 11) and pin 10 must be
-// an output. This is much faster - also required if you want
-// to use the microSD card (see the image drawing example)
-Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
-// Use this initializer (uncomment) if you're using a 1.44" TFT
 
 /* MQTT client instance */
 /* For quickly check you can use: http://www.hivemq.com/demos/websocket-client/ (Connection= test.mosquitto.org:8080) */
@@ -70,6 +58,7 @@ uint8_t displayPage = 2;
 octoprint_t octoprintValues;
 
 display_hd44780 disp_hd44780(&octoprintValues);
+display_st7735 disp_st7735(&octoprintValues);
 
 void displayCallback();
 void displayScreenCallback();
@@ -90,14 +79,15 @@ void IRAM_ATTR keyIRQHandler()
 			else
 				key_pressed = false;
 		}
-		//interrupts();
+
+		interrupts();
 	}
 }
 
 void printDisplay(uint8_t line, String str)
 {
-	if (AppSettings.display_type == HD44780) {
-			LiquidCrystal_I2C lcd = disp_hd44780.getLCD();
+	if (AppSettings.display_type == HD44780_I2C) {
+			LiquidCrystal_I2C lcd = disp_hd44780.getDisplay();
 			lcd.setCursor(0, line); lcd.print(DEFAULT_CLEARLINE_STRING);
 			lcd.setCursor(0, line); lcd.print(str);
 	}
@@ -124,8 +114,8 @@ void onMQTTMessageReceived(String topic, String message)
 {
 	//debugf("Debug: %s - %s", topic.c_str(), message.c_str());
 
-	if (AppSettings.display_type == HD44780) {
-		LiquidCrystal_I2C lcd = disp_hd44780.getLCD();
+	if (AppSettings.display_type == HD44780_I2C) {
+		LiquidCrystal_I2C lcd = disp_hd44780.getDisplay();
 
 		/* General Display */
 		if (AppSettings.display && topic.startsWith(AppSettings.display_topic_prefix)) {
@@ -278,6 +268,29 @@ void onMQTTMessageReceived(String topic, String message)
 			}
 
 			debugf("[Timestamp] %d", octoprintValues._timestamp);
+		}
+	} else if (AppSettings.display_type == ST7735) {
+		Adafruit_ST7735 tft = disp_st7735.getDisplay();
+		DynamicJsonBuffer payloadBuffer;
+		/* General Display */
+		if (AppSettings.display && topic.startsWith(AppSettings.display_topic_prefix)) {
+			if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_enable)) {
+			} else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_text)) {
+				JsonObject& payload = payloadBuffer.parseObject(message);
+				if (payload.success()) {
+					uint8_t x = payload["x"];
+					uint8_t y = payload["y"];
+					String text = payload["text"].asString();
+					tft.setCursor(x, y);
+					tft.print(text);
+				}
+			} else if (topic.equals(AppSettings.display_topic_prefix + AppSettings.display_topic_clear)) {
+				JsonObject& payload = payloadBuffer.parseObject(message);
+				if (payload.success()) {
+					tft.setCursor(0, 0);
+					tft.fillScreen(payload["color"].as<int>());
+				}
+			}
 		}
 	}
 }
@@ -450,7 +463,8 @@ void connectOk(IPAddress ip, IPAddress mask, IPAddress gateway)
 
 	if (AppSettings.keyinput) {
 		/* Attach interrupt if enabled in config */
-		attachInterrupt(AppSettings.keyinput_pin, keyIRQHandler, CHANGE);
+		pinMode(AppSettings.keyinput_pin, INPUT);
+		attachInterrupt(AppSettings.keyinput_pin, keyIRQHandler, LOW);
 		debounceTimer.initializeMs(100, debounceKey).start();
 	}
 
@@ -520,9 +534,11 @@ void displayScreenCallback()
 void displayCallback()
 {
 	displayTimer.stop();
-	//display_hd44780 display();
-	disp_hd44780.showPage(displayPage);
-	//display.showPage(&lcd, displayPage);
+	if (AppSettings.display_type == HD44780_I2C) {
+		disp_hd44780.showPage(displayPage);
+	} else if (AppSettings.display_type == ST7735) {
+		//display.showPage(&lcd, displayPage);
+	}
 	displayTimer.restart();
 }
 
@@ -651,21 +667,14 @@ void init()
 
 		if (AppSettings.display) {
 			switch (AppSettings.display_type) {
-				case HD44780: // HD44780 16x2 Display on I2C
+				case HD44780_I2C: // HD44780 16x2 Display on I2C
 						disp_hd44780.begin(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 						break;
 				case ST7735: // ST7735 Display 1,44" or 1,8"
-						//tft.initR(INITR_BLACKTAB); // 1,8"
-						tft.initR(INITR_144GREENTAB);// 1,4"
-
-						tft.fillScreen(ST7735_GREEN);
-
+						disp_st7735.begin(TFT14);
 						break;
 			}
 
-			// Temp
-			tft.initR(INITR_144GREENTAB);// 1,4"
-			tft.fillScreen(ST7735_BLUE);
 	/*		uint8_t y = 10;
 			for (uint8_t j = 0; j <= 24; j += 2	) {
 				uint8_t x = 0;

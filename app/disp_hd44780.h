@@ -14,7 +14,8 @@
 
 #include <Libraries/LiquidCrystal/LiquidCrystal_I2C.h>
 
-#define DEFAULT_STARTUP_STRING "OctoDisplay"
+#define DEFAULT_STARTUP_STRING_LINE1 "OctoDisplay"
+#define DEFAULT_STARTUP_STRING_LINE2 "  is starting up"
 #define DEFAULT_CLEARLINE_STRING "                "
 
 class display_hd44780 {
@@ -23,7 +24,7 @@ class display_hd44780 {
 		void begin(uint8_t lcd_Addr, uint8_t En, uint8_t Rw, uint8_t Rs, uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7, uint8_t backlighPin, t_backlighPol pol);
 		void showPage(uint8_t displayPage);
 		void printBig(uint8_t x, uint8_t num);
-		LiquidCrystal_I2C getLCD(void);
+		LiquidCrystal_I2C getDisplay(void);
 	private:
 		// Set the LCD address to 0x27
 		//LiquidCrystal_I2C lcd(0x27);

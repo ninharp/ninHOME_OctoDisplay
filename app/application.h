@@ -14,13 +14,12 @@
 #include <user_config.h>
 #include <SmingCore/SmingCore.h>
 #include <AppSettings.h>
-#include <Libraries/Adafruit_ST7735/Adafruit_ST7735.h>
-#include <Libraries/Adafruit_GFX/Adafruit_GFX.h>
 #include <ninMQTTClient.h>
 #include <system/include/debug_progmem.h>
 
 #include <octoprint.h>
 #include <disp_hd44780.h>
+#include <disp_st7735.h>
 #include <app_defaults.h>
 #include <webinterface.h>
 
